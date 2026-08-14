@@ -1,5 +1,6 @@
 /* app.c - application layer: initialize drivers and services and provide poll */
 #include "app.h"
+#include "main.h"
 #include "sensors.h"
 #include "fan.h"
 #include "comms.h"

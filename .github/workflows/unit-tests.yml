@@ -24,3 +24,13 @@ jobs:
           gcc -std=c11 -Itests tests/test_bmp280.c -o tests/test_bmp280
       - name: Run BMP280 test
         run: ./tests/test_bmp280
+      - name: Build sensors logic test
+        run: |
+          gcc -std=c11 -Itests tests/test_sensors_logic.c -o tests/test_sensors_logic
+      - name: Run sensors logic test
+        run: ./tests/test_sensors_logic
+      - name: Build fan logic test
+        run: |
+          gcc -std=c11 -Itests tests/test_fan.c -o tests/test_fan
+      - name: Run fan logic test
+        run: ./tests/test_fan

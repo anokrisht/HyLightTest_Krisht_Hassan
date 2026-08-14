@@ -19,6 +19,7 @@ uint16_t crc16_ccitt(const uint8_t *data, size_t len)
 size_t cobs_encode(const uint8_t *in, size_t in_len, uint8_t *out)
 {
     const uint8_t *end = in + in_len;
+    uint8_t *out_start = out;
     uint8_t *code_ptr = out++;
     uint8_t code = 1;
 
@@ -39,7 +40,7 @@ size_t cobs_encode(const uint8_t *in, size_t in_len, uint8_t *out)
         }
     }
     *code_ptr = code;
-    return (size_t)(out - (uint8_t *)(&out[-0]));
+    return (size_t)(out - out_start);
 }
 
 size_t cobs_decode(const uint8_t *in, size_t in_len, uint8_t *out)

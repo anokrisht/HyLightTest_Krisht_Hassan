@@ -53,6 +53,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/sensors.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/fan.c
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/comms.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app.c
 )
 
 # Add include paths

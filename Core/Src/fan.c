@@ -4,6 +4,11 @@
 
 static fan_t f = {0};
 static I2C_HandleTypeDef hi2c1; /* reuse I2C1 from sensors.c via same init */
+static fan_mode_t mode = FAN_MODE_AUTO;
+
+fan_mode_t fan_get_mode(void) { return mode; }
+
+void fan_set_mode(fan_mode_t m) { mode = m; }
 
 void fan_init(void)
 {
@@ -30,6 +35,12 @@ void fan_poll(void)
         f.fault = true;
         f.rpm = 0;
         return;
+    }
+    /* Apply forced modes */
+    if (mode == FAN_MODE_FORCED_ON) {
+        fan_set_pwm(255);
+    } else if (mode == FAN_MODE_FORCED_OFF) {
+        fan_set_pwm(0);
     }
     /* Read RPM register placeholder (2 bytes) */
     uint8_t reg = 0x00;

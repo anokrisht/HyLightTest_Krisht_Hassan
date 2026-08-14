@@ -17,5 +17,6 @@ typedef struct {
 void sensors_init(void);
 void sensors_poll(void);
 const sensors_t* sensors_get(void);
+uint8_t sensors_status_flags(void);
 
 #endif // SENSORS_H

@@ -82,11 +82,12 @@ void sensors_poll(void)
         }
     }
 
-    /* compute differential pressures: assume sensors 0/1 -> ΔP1, 2/3 -> ΔP2, 4/5 -> ΔP3 */
+    /* compute differential pressures per spec: ΔP1 = sensor1 - sensor0, ΔP2 = sensor3 - sensor2, ΔP3 = sensor5 - sensor4 */
     for (int i = 0; i < 3; ++i) {
-        int a = i*2, b = i*2+1;
+        int a = i*2, b = i*2+1; /* a=0,b=1 for i=0 */
         if (s.present[a] && s.present[b]) {
-            s.dp[i] = s.pressure_pa[a] - s.pressure_pa[b];
+            /* spec says sensor1 - sensor0, so use b - a */
+            s.dp[i] = s.pressure_pa[b] - s.pressure_pa[a];
         } else {
             s.dp[i] = 0.0f; /* indicate invalid */
         }
@@ -96,4 +97,19 @@ void sensors_poll(void)
 const sensors_t* sensors_get(void)
 {
     return &s;
+}
+
+uint8_t sensors_status_flags(void)
+{
+    uint8_t flags = 0;
+    /* bit1..3: dp valid flags for ΔP1..3 (use bits 1-3) */
+    for (int i = 0; i < 3; ++i) {
+        int a = i*2, b = i*2+1;
+        if (s.present[a] && s.present[b]) flags |= (1 << (i+1));
+    }
+    /* bit4: sensor comm fault if any sensor missing */
+    for (int i = 0; i < SENSORS_COUNT; ++i) {
+        if (!s.present[i]) { flags |= (1<<4); break; }
+    }
+    return flags;
 }

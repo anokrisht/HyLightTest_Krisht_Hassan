@@ -21,10 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "sensors.h"
-#include "fan.h"
-#include "comms.h"
-#include "utils.h"
+#include "app.h"
 
 /* USER CODE END Includes */
 
@@ -102,10 +99,8 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  /* initialize subsystems */
-  sensors_init();
-  fan_init();
-  comms_init();
+  /* initialize application layer (drivers & services) */
+  app_init();
 
   /* USER CODE END 2 */
 
@@ -117,11 +112,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     static uint32_t last_poll = 0;
-    if (HAL_GetTick() - last_poll >= 200) {
+    if (HAL_GetTick() - last_poll >= 500) {
       last_poll = HAL_GetTick();
-      sensors_poll();
-      fan_poll();
-      comms_poll();
+      app_poll();
     }
   }
   /* USER CODE END 3 */

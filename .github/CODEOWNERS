@@ -1,0 +1,3 @@
+# CODEOWNERS
+# Replace @REPO_OWNER with the GitHub username or team that owns this repository
+* @REPO_OWNER

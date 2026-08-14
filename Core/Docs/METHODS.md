@@ -21,6 +21,7 @@ This document lists public methods across drivers and services, and brief usage 
 
 `comms.h`
 - `void comms_init(void)` — Initialize UART and CAN; reads CAN ID from GPIO PC0..PC2.
+ - `void comms_init(void)` — Initialize UART and CAN; reads CAN ID from GPIO pins (configured in `MX_GPIO_Init`, default: `PA8..PA10`).
 - `void comms_poll(void)` — Periodic transmit of diagnostics and UART frame processing.
 - `void comms_send_diagnostics(const void *payload, uint16_t len)` — Low-level CAN TX helper.
 

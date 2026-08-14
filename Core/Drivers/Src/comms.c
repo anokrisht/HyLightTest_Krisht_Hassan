@@ -62,19 +62,12 @@ static void FDCAN1_Init(void)
 
 static void read_can_id_from_gpio(void)
 {
-    /* Configure PC0..PC2 as inputs with pull-down and read a 3-bit ID */
-    __HAL_RCC_GPIOC_CLK_ENABLE();
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
+    /* Use PA8..PA10 as CAN ID inputs (they are already configured in MX_GPIO_Init)
+       Read as a 3-bit value: PA8 = bit0, PA9 = bit1, PA10 = bit2 */
     uint32_t v = 0;
-    v |= (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_0) == GPIO_PIN_SET) ? 1U : 0U;
-    v |= (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_1) == GPIO_PIN_SET) ? 2U : 0U;
-    v |= (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_2) == GPIO_PIN_SET) ? 4U : 0U;
-    /* base ID configurable; use 0x200 + v as standard CAN ID */
+    v |= (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_8) == GPIO_PIN_SET) ? 1U : 0U;
+    v |= (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9) == GPIO_PIN_SET) ? 2U : 0U;
+    v |= (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == GPIO_PIN_SET) ? 4U : 0U;
     can_id = 0x200 + v;
 }
 

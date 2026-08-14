@@ -6,59 +6,16 @@
 #include "fan.h"
 #include <string.h>
 
-/* UART (USART2) and FDCAN1 handles */
-static UART_HandleTypeDef huart2;
-static FDCAN_HandleTypeDef hfdcan1;
+/* Use CubeMX-initialized peripheral handles from main.c */
+extern UART_HandleTypeDef huart2;
+extern FDCAN_HandleTypeDef hfdcan1;
 static uint32_t can_id = 0x100;
 
 static uint8_t uart_rx_buf[256];
 static uint8_t uart_frame_buf[512];
 static size_t uart_rx_len = 0;
 
-/* Minimal UART init: PA2 Tx, PA3 Rx */
-static void UART2_Init(void)
-{
-    __HAL_RCC_USART2_CLK_ENABLE();
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-    huart2.Instance = USART2;
-    huart2.Init.BaudRate = 115200;
-    huart2.Init.WordLength = UART_WORDLENGTH_8B;
-    huart2.Init.StopBits = UART_STOPBITS_1;
-    huart2.Init.Parity = UART_PARITY_NONE;
-    huart2.Init.Mode = UART_MODE_TX_RX;
-    huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-    huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-    HAL_UART_Init(&huart2);
-}
-
-/* Minimal FDCAN init for TX-only */
-static void FDCAN1_Init(void)
-{
-    __HAL_RCC_FDCAN_CLK_ENABLE();
-    hfdcan1.Instance = FDCAN1;
-    hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
-    hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
-    hfdcan1.Init.AutoRetransmission = ENABLE;
-    hfdcan1.Init.TransmitPause = DISABLE;
-    hfdcan1.Init.ProtocolException = DISABLE;
-    hfdcan1.Init.NominalPrescaler = 1;
-    hfdcan1.Init.NominalSyncJumpWidth = 1;
-    hfdcan1.Init.NominalTimeSeg1 = 13;
-    hfdcan1.Init.NominalTimeSeg2 = 2;
-    hfdcan1.Init.DataPrescaler = 1;
-    hfdcan1.Init.DataSyncJumpWidth = 1;
-    hfdcan1.Init.DataTimeSeg1 = 1;
-    hfdcan1.Init.DataTimeSeg2 = 1;
-    HAL_FDCAN_Init(&hfdcan1);
-}
 
 static void read_can_id_from_gpio(void)
 {
@@ -73,11 +30,16 @@ static void read_can_id_from_gpio(void)
 
 void comms_init(void)
 {
-    UART2_Init();
-    FDCAN1_Init();
+    /* Assumes MX_USART2_UART_Init() and MX_FDCAN1_Init() were called from main.c
+       Start FDCAN peripheral if not already started and enable UART RX IRQ. */
     read_can_id_from_gpio();
-    /* start UART receive in interrupt mode */
+    /* start UART receive in interrupt mode (ensure NVIC enabled in CubeMX; enable here if not) */
     HAL_UART_Receive_IT(&huart2, uart_rx_buf, 1);
+    /* Ensure FDCAN is started so TX works */
+    HAL_FDCAN_Start(&hfdcan1);
+    /* Make sure UART IRQ is enabled (CubeMX should handle this normally) */
+    HAL_NVIC_SetPriority(USART2_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(USART2_IRQn);
 }
 
 /* Simple diagnostic CAN transmit: single frame with up to 8 bytes (truncated) */

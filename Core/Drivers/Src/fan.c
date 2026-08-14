@@ -3,7 +3,8 @@
 #include "main.h"
 
 static fan_t f = {0};
-static I2C_HandleTypeDef hi2c1; /* reuse I2C1 from sensors.c via same init */
+/* Use CubeMX I2C handle from main.c */
+extern I2C_HandleTypeDef hi2c1; /* reuse I2C1 initialized by MX_I2C1_Init */
 static fan_mode_t mode = FAN_MODE_AUTO;
 
 fan_mode_t fan_get_mode(void) { return mode; }

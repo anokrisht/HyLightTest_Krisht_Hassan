@@ -7,34 +7,8 @@
 /* Assumptions: I2C1 is used. TCA9548A at 0x70. BMP280 at 0x76 on each channel. */
 static sensors_t s = {0};
 
-static I2C_HandleTypeDef hi2c1;
-
-/* Minimal I2C init (user may change pins in board) */
-static void I2C1_Init(void)
-{
-    __HAL_RCC_I2C1_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-    /* PB6 SCL, PB7 SDA typical - adjust if needed */
-    GPIO_InitStruct.Pin = GPIO_PIN_6 | GPIO_PIN_7;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_OD;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    GPIO_InitStruct.Alternate = GPIO_AF4_I2C1;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    hi2c1.Instance = I2C1;
-    hi2c1.Init.Timing = 0x00707CBB; /* ~100kHz (approx) */
-    hi2c1.Init.OwnAddress1 = 0;
-    hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-    hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-    hi2c1.Init.OwnAddress2 = 0;
-    hi2c1.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
-    hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-    hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-    HAL_I2C_Init(&hi2c1);
-}
+/* Use the I2C handle initialized by CubeMX in main.c */
+extern I2C_HandleTypeDef hi2c1;
 
 static bool tca_select_channel(uint8_t ch)
 {
@@ -63,7 +37,7 @@ static bool bmp280_read_raw(uint8_t channel, int32_t *out_raw)
 void sensors_init(void)
 {
     memset(&s, 0, sizeof(s));
-    I2C1_Init();
+    /* I2C1 should be initialized by CubeMX-generated MX_I2C1_Init() in main.c */
     for (int i = 0; i < SENSORS_COUNT; ++i) s.present[i] = false;
 }
 

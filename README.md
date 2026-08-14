@@ -61,5 +61,3 @@ cmake --build build -- -j4
 - Replace placeholder registers/addresses in `Core/Drivers` with exact values from sensor and fan datasheets.
 - Add unit tests (Unity) for drivers and services and run them in CI.
 - Consider introducing a lightweight scheduler or RTOS for deterministic behavior.
-
-If you'd like, I will: (A) expand `METHODS.md` into a full API reference with function signatures and expected return codes, (B) add Unity-based unit tests and CI steps, or (C) adjust the drivers to match the exact MAX6650 registers — pick one.

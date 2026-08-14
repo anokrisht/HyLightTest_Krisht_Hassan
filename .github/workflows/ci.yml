@@ -19,11 +19,11 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake || true
+          cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=cmake/gcc-arm-none-eabi.cmake
 
       - name: Build
         run: |
-          cmake --build build -- -j$(nproc) || true
+          cmake --build build -- -j$(nproc)
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

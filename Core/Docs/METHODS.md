@@ -4,7 +4,7 @@ This document lists public methods across drivers and services, and brief usage 
 
 `app.h`
 - `void app_init(void)` — Initialize sensors, fan and comms.
-- `void app_poll(void)` — Called periodically (~500 ms) to sample sensors, update fan and transmit diagnostics.
+- `void app_poll(void)` — Cooperative scheduler entry; call frequently from `main()` and let internal gates run subsystems at different rates (comms ~100 ms, sensors/fan ~200 ms).
 
 `sensors.h`
 - `void sensors_init(void)` — Initialize I2C and prepare sensors.
@@ -20,8 +20,7 @@ This document lists public methods across drivers and services, and brief usage 
 - `fan_mode_t fan_get_mode(void)` — Query current mode.
 
 `comms.h`
-- `void comms_init(void)` — Initialize UART and CAN; reads CAN ID from GPIO PC0..PC2.
- - `void comms_init(void)` — Initialize UART and CAN; reads CAN ID from GPIO pins (configured in `MX_GPIO_Init`, default: `PA8..PA10`).
+- `void comms_init(void)` — Initialize UART and CAN; reads CAN ID from GPIO pins configured in `MX_GPIO_Init` (default: `PB3..PB5`).
 - `void comms_poll(void)` — Periodic transmit of diagnostics and UART frame processing.
 - `void comms_send_diagnostics(const void *payload, uint16_t len)` — Low-level CAN TX helper.
 

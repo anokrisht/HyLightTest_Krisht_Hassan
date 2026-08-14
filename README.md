@@ -12,10 +12,12 @@ Embedded firmware for the HyLighter Pressure Control System (STM32G431).
 ## Logic flow
 1. Boot → `main()` calls `app_init()`.
 2. `app_init()` initializes drivers: sensors, fan, comms.
-3. Periodic `app_poll()` (~500 ms):
-	 - `sensors_poll()` reads six BMP280 sensors via the TCA9548A multiplexer and computes ΔP1..ΔP3.
-	 - `fan_poll()` reads RPM and detects faults; modes can be `AUTO`, `FORCED_ON`, `FORCED_OFF`.
-	 - `comms_poll()` packages diagnostics (ΔP1..3, RPM, status) into an 11-byte payload, appends CRC16, encodes with COBS, transmits over UART, and sends diagnostics over CAN (TX only). It also parses UART control packets (COBS + CRC) to change fan mode.
+3. Cooperative scheduling:
+ 	 - `main()` calls `app_poll()` frequently (every 50 ms). `app_poll()` internally gates each subsystem:
+ 	   - `comms_poll()` ≈ 100 ms
+ 	   - `sensors_poll()` ≈ 200 ms
+ 	   - `fan_poll()` ≈ 200 ms
+ 	 - `comms_poll()` packages diagnostics (ΔP1..3, RPM, status) into an 11-byte payload, appends CRC16, encodes with COBS, transmits over UART, and sends diagnostics over CAN (TX only). It also parses UART control packets (COBS + CRC) to change fan mode.
 
 ## Key files (links)
 - Drivers: [Core/Drivers/](Core/Drivers/)

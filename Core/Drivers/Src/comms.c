@@ -37,41 +37,69 @@ void comms_init(void)
     HAL_UART_Receive_IT(&huart2, uart_rx_buf, 1);
 }
 
-/* Diagnostic CAN transmit.
-   Using Classic CAN (FDCAN_FRAME_CLASSIC) limits data payload to 8 bytes per frame.
-   Split longer diagnostics into multiple 0..N frames of up to 8 bytes each. */
+/* Purpose-built CAN diagnostics framing:
+   We send two Classic-CAN frames with distinct identifiers so receivers can
+   distinguish the primary and secondary diagnostic frames without relying on ordering.
+
+   Frame A (ID = can_id)  - 8 bytes:
+     [0..1] ΔP1 (int16 BE)
+     [2..3] ΔP2 (int16 BE)
+     [4..5] Fan RPM (uint16 BE)
+     [6]    Status flags
+     [7]    Reserved
+
+   Frame B (ID = can_id + 1) - 8 bytes:
+     [0..1] ΔP3 (int16 BE)
+     [2..3] CRC16 (BE) computed over UART diagnostic fields (if available)
+     [4..7] Reserved
+*/
+static void comms_send_can_diag_frames(int16_t dp1, int16_t dp2, int16_t dp3, uint16_t rpm, uint8_t status, uint16_t crc)
+{
+    FDCAN_TxHeaderTypeDef txHeader = {0};
+    uint8_t data[8] = {0};
+
+    /* Frame A */
+    txHeader.Identifier = can_id;
+    txHeader.IdType = FDCAN_STANDARD_ID;
+    txHeader.TxFrameType = FDCAN_DATA_FRAME;
+    txHeader.DataLength = FDCAN_DLC_BYTES_8;
+    data[0] = (dp1 >> 8) & 0xFF;
+    data[1] = dp1 & 0xFF;
+    data[2] = (dp2 >> 8) & 0xFF;
+    data[3] = dp2 & 0xFF;
+    data[4] = (rpm >> 8) & 0xFF;
+    data[5] = rpm & 0xFF;
+    data[6] = status;
+    data[7] = 0;
+    (void)HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txHeader, data);
+
+    /* Frame B */
+    txHeader.Identifier = can_id + 1;
+    txHeader.DataLength = FDCAN_DLC_BYTES_8;
+    memset(data, 0, sizeof(data));
+    data[0] = (dp3 >> 8) & 0xFF;
+    data[1] = dp3 & 0xFF;
+    data[2] = (crc >> 8) & 0xFF;
+    data[3] = crc & 0xFF;
+    (void)HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txHeader, data);
+}
+
 void comms_send_diagnostics(const void *payload, uint16_t len)
 {
+    if (payload == NULL || len == 0) return;
     const uint8_t *p = (const uint8_t*)payload;
-    uint16_t remaining = len;
-    uint16_t offset = 0;
-    while (remaining > 0) {
-        uint8_t chunk = (remaining > 8) ? 8 : (uint8_t)remaining;
-        FDCAN_TxHeaderTypeDef txHeader = {0};
-        txHeader.Identifier = can_id;
-        txHeader.IdType = FDCAN_STANDARD_ID;
-        txHeader.TxFrameType = FDCAN_DATA_FRAME;
-        /* select DLC constant for chunk length */
-        switch (chunk) {
-            case 0: txHeader.DataLength = FDCAN_DLC_BYTES_0; break;
-            case 1: txHeader.DataLength = FDCAN_DLC_BYTES_1; break;
-            case 2: txHeader.DataLength = FDCAN_DLC_BYTES_2; break;
-            case 3: txHeader.DataLength = FDCAN_DLC_BYTES_3; break;
-            case 4: txHeader.DataLength = FDCAN_DLC_BYTES_4; break;
-            case 5: txHeader.DataLength = FDCAN_DLC_BYTES_5; break;
-            case 6: txHeader.DataLength = FDCAN_DLC_BYTES_6; break;
-            case 7: txHeader.DataLength = FDCAN_DLC_BYTES_7; break;
-            case 8: default: txHeader.DataLength = FDCAN_DLC_BYTES_8; break;
-        }
-        uint8_t data[8] = {0};
-        memcpy(data, &p[offset], chunk);
-        /* try to enqueue; if it fails, mark something (here we ignore but could set status) */
-        if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txHeader, data) != HAL_OK) {
-            /* TODO: handle queue full/error (set status flag, retry, or log) */
-        }
-        offset += chunk;
-        remaining -= chunk;
-    }
+    /* parse available fields, using defaults if missing */
+    int16_t dp1 = 0, dp2 = 0, dp3 = 0;
+    uint16_t rpm = 0;
+    uint8_t status = 0;
+    uint16_t crc = 0;
+    if (len >= 2) dp1 = (int16_t)((p[0] << 8) | p[1]);
+    if (len >= 4) dp2 = (int16_t)((p[2] << 8) | p[3]);
+    if (len >= 6) dp3 = (int16_t)((p[4] << 8) | p[5]);
+    if (len >= 8) rpm = (uint16_t)((p[6] << 8) | p[7]);
+    if (len >= 9) status = p[8];
+    if (len >= 11) crc = (uint16_t)((p[9] << 8) | p[10]);
+    comms_send_can_diag_frames(dp1, dp2, dp3, rpm, status, crc);
 }
 
 /* UART receive IRQ handler: collect bytes, decode COBS frames with CRC16 */
@@ -154,8 +182,8 @@ void comms_poll(void)
         payload[9] = (crc >> 8) & 0xFF;
         payload[10] = crc & 0xFF;
 
-        /* Send over CAN (will truncate/pad to 12 bytes) */
-        comms_send_diagnostics(payload, sizeof(payload));
+        /* Send over CAN using purpose-built frames (Frame A: can_id, Frame B: can_id+1) */
+        comms_send_can_diag_frames(dp1, dp2, dp3, fn->rpm, status, crc);
 
         /* Also stream over UART: COBS encode whole 11-byte payload then 0x00 delimiter */
         uint8_t enc[128];

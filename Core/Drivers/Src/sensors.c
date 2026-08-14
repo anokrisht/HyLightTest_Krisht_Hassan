@@ -123,10 +123,17 @@ void sensors_init(void)
         if (!tca_select_channel(i)) continue;
         /* ctrl_meas: osrs_t=1, osrs_p=1, mode=3 (normal) -> 0x27 */
         uint8_t ctrl_meas = 0x27;
-        HAL_I2C_Mem_Write(&hi2c2, 0x76<<1, 0xF4, I2C_MEMADD_SIZE_8BIT, &ctrl_meas, 1, 200);
-        /* config left as default (no filter, minimal standby) */
-        /* attempt to read calibration for each sensor */
-        if (bmp280_read_calibration(i)) bmp_cal_valid[i] = true;
+        if (HAL_I2C_Mem_Write(&hi2c2, 0x76<<1, 0xF4, I2C_MEMADD_SIZE_8BIT, &ctrl_meas, 1, 200) != HAL_OK) {
+            /* sensor write failed — leave as not present and continue */
+            continue;
+        }
+        /* allow the sensor to start measurements and settle */
+        HAL_Delay(10);
+        /* attempt to read calibration with retries */
+        for (int attempt = 0; attempt < 3; ++attempt) {
+            if (bmp280_read_calibration(i)) { bmp_cal_valid[i] = true; break; }
+            HAL_Delay(5);
+        }
     }
 }
 

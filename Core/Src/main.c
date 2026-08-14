@@ -116,7 +116,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
     static uint32_t last_poll = 0;
-    if (HAL_GetTick() - last_poll >= 500) {
+    if (HAL_GetTick() - last_poll >= 50) {
       last_poll = HAL_GetTick();
       app_poll();
     }

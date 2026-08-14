@@ -2,11 +2,18 @@
 #include "fan.h"
 #include "main.h"
 
-/* NOTE: MAX6650 register map and I2C address must be verified against the datasheet.
-    The defines below are placeholders and should be updated before production. */
-#define MAX6650_I2C_ADDR ((0x2F) << 1) /* TODO: confirm 7-bit address from datasheet */
-#define MAX6650_REG_PWM 0x01 /* placeholder register for PWM command */
-#define MAX6650_REG_RPM 0x00 /* placeholder register to read RPM (2 bytes) */
+/* MAX6650: register map and I2C address may vary by part and board wiring.
+   Default placeholders are provided but should be replaced with datasheet values.
+   These may be overridden at build time or by editing these defines. */
+#ifndef MAX6650_I2C_ADDR
+#define MAX6650_I2C_ADDR ((0x2F) << 1)
+#endif
+#ifndef MAX6650_REG_PWM
+#define MAX6650_REG_PWM 0x01
+#endif
+#ifndef MAX6650_REG_RPM
+#define MAX6650_REG_RPM 0x00
+#endif
 
 static fan_t f = {0};
 /* Use CubeMX I2C handle from main.c */
@@ -20,15 +27,15 @@ void fan_set_mode(fan_mode_t m) { mode = m; }
 void fan_init(void)
 {
     /* assume I2C2 already initialised by CubeMX; mark present if device ACKs */
-    if (HAL_I2C_IsDeviceReady(&hi2c2, MAX6650_I2C_ADDR, 3, 50) == HAL_OK) {
-        f.present = true;
-    } else {
-        f.present = false;
-        f.fault = true;
+    /* Probe device with a few retries to tolerate I2C timing/power-up */
+    f.present = false;
+    for (int i = 0; i < 3; ++i) {
+        if (HAL_I2C_IsDeviceReady(&hi2c2, MAX6650_I2C_ADDR, 3, 50) == HAL_OK) { f.present = true; break; }
+        HAL_Delay(10);
     }
     f.pwm = 0;
     f.rpm = 0;
-    f.fault = false;
+    f.fault = !f.present;
 }
 
 void fan_set_pwm(uint8_t pwm)
@@ -38,8 +45,11 @@ void fan_set_pwm(uint8_t pwm)
     uint8_t data[2];
     data[0] = MAX6650_REG_PWM; /* register: FAN speed command (placeholder) */
     data[1] = pwm;
-    if (HAL_I2C_Master_Transmit(&hi2c2, MAX6650_I2C_ADDR, data, 2, 100) != HAL_OK) {
+    /* write with a couple retries */
+    for (int i = 0; i < 2; ++i) {
+        if (HAL_I2C_Master_Transmit(&hi2c2, MAX6650_I2C_ADDR, data, 2, 100) == HAL_OK) { f.fault = false; break; }
         f.fault = true;
+        HAL_Delay(5);
     }
 }
 
@@ -56,11 +66,16 @@ void fan_poll(void)
     } else if (mode == FAN_MODE_FORCED_OFF) {
         fan_set_pwm(0);
     }
-    /* Read RPM register placeholder (2 bytes) */
+    /* Read RPM register placeholder (2 bytes) with retries */
     uint8_t reg = MAX6650_REG_RPM;
     uint8_t buf[2] = {0};
-    if (HAL_I2C_Master_Transmit(&hi2c2, MAX6650_I2C_ADDR, &reg, 1, 100) != HAL_OK ||
-        HAL_I2C_Master_Receive(&hi2c2, MAX6650_I2C_ADDR, buf, 2, 100) != HAL_OK) {
+    bool ok = false;
+    for (int i = 0; i < 2; ++i) {
+        if (HAL_I2C_Master_Transmit(&hi2c2, MAX6650_I2C_ADDR, &reg, 1, 100) == HAL_OK &&
+            HAL_I2C_Master_Receive(&hi2c2, MAX6650_I2C_ADDR, buf, 2, 100) == HAL_OK) { ok = true; break; }
+        HAL_Delay(5);
+    }
+    if (!ok) {
         f.fault = true;
         f.rpm = 0;
         return;

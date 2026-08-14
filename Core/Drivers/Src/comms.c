@@ -19,13 +19,13 @@ static size_t uart_rx_len = 0;
 
 static void read_can_id_from_gpio(void)
 {
-    /* Use PA8..PA10 as CAN ID inputs (they are already configured in MX_GPIO_Init)
-       Read as a 3-bit value: PA8 = bit0, PA9 = bit1, PA10 = bit2 */
-    uint32_t v = 0;
-    v |= (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_8) == GPIO_PIN_SET) ? 1U : 0U;
-    v |= (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9) == GPIO_PIN_SET) ? 2U : 0U;
-    v |= (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == GPIO_PIN_SET) ? 4U : 0U;
-    can_id = 0x200 + v;
+     /* Use PB3..PB5 as CAN ID inputs (MX_GPIO_Init configures PB3/PB4/PB5 as inputs)
+         Read as a 3-bit value: PB3 = bit0, PB4 = bit1, PB5 = bit2 */
+     uint32_t v = 0;
+     v |= (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3) == GPIO_PIN_SET) ? 1U : 0U;
+     v |= (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) == GPIO_PIN_SET) ? 2U : 0U;
+     v |= (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5) == GPIO_PIN_SET) ? 4U : 0U;
+     can_id = 0x200 + v;
 }
 
 void comms_init(void)

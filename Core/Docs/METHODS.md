@@ -51,6 +51,7 @@ All function prototypes below are the canonical declarations; include the corres
 	- Errors: none returned; check `sensors_status_flags()` to inspect presence/comm faults.
 - Note: BMP280 calibration and full compensation is implemented. `sensors_init()` attempts to read calibration data from each BMP280 channel; `sensors_poll()` applies Bosch's temperature and pressure compensation formulas to produce calibrated pressure in Pascals.
  - Note: The firmware now uses I2C2 for sensor & fan peripherals to avoid SWD pin conflicts. Drivers (`sensors.c`, `fan.c`) reference the `hi2c2` handle initialized by `MX_I2C2_Init()`.
+ - The CAN ID is read from GPIO pins `PB3..PB5` at startup (see `comms.c`). These pins are configured as inputs in `MX_GPIO_Init()`.
 - `void sensors_poll(void);`
 	- Description: Read BMP280 raw registers on each configured channel and update stored measurements and ΔP values.
 	- Notes: uses a simple scaling of raw pressure. Replace with full compensation using BMP280 calibration for production.

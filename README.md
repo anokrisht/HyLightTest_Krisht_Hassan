@@ -51,7 +51,7 @@ cmake --build build -- -j4
 ```
 
 3) Hardware tests (quick)
- - Configure CAN ID pins (default: `PA8..PA10`) and power-cycle to verify CAN ID read. See [HOWTO-HARDWARE-TEST.md](HOWTO-HARDWARE-TEST.md).
+ - Configure CAN ID pins (default: `PB3..PB5`) and power-cycle to verify CAN ID read. See [HOWTO-HARDWARE-TEST.md](HOWTO-HARDWARE-TEST.md).
 - Connect BMP280 sensors to TCA9548A channels 0..5 and verify ΔP outputs.
 - Use UART to receive COBS-encoded diagnostic frames (11-byte payload before COBS) and to send control packets (1-byte command + CRC16, COBS-encoded):
 	- `0x01` → Force fan ON

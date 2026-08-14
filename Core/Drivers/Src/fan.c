@@ -2,9 +2,12 @@
 #include "fan.h"
 #include "main.h"
 
-/* MAX6650: register map and I2C address may vary by part and board wiring.
-   Default placeholders are provided but should be replaced with datasheet values.
-   These may be overridden at build time or by editing these defines. */
+/* MAX6650 implementation guide:
+    See Core/Docs/MAX6650.md for the required register map, I2C address, and init steps.
+    The driver below provides configurable `#define`s that can be overridden at
+    build time (e.g. -DMAX6650_I2C_ADDR=0xXX). Replace these with exact values
+    from your board's MAX6650 datasheet before production.
+*/
 #ifndef MAX6650_I2C_ADDR
 #define MAX6650_I2C_ADDR ((0x2F) << 1)
 #endif

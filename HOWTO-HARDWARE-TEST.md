@@ -1,8 +1,8 @@
 # Hardware Test Procedures
 
 1) CAN ID detection
-- Configure PC0..PC2 logic pins (pull-down or pull-up) per desired ID bits.
-- Power cycle MCU and monitor CAN bus for ID 0x200 + value read from pins.
+- Configure `PB3..PB5` logic pins (pull-down or pull-up) per desired ID bits.
+- Power cycle MCU and monitor CAN bus for ID `0x200 + value read from pins`.
 
 2) Sensor switching and ΔP verification
 - Connect BMP280 sensors to TCA9548A channels 0..5.

@@ -51,8 +51,7 @@ All function prototypes below are the canonical declarations; include the corres
 - Note: BMP280 calibration and full compensation is implemented. `sensors_init()` attempts to read calibration data from each BMP280 channel; `sensors_poll()` applies Bosch's temperature and pressure compensation formulas to produce calibrated pressure in Pascals.
  - Note: The firmware now uses I2C2 for sensor & fan peripherals to avoid SWD pin conflicts. Drivers (`sensors.c`, `fan.c`) reference the `hi2c2` handle initialized by `MX_I2C2_Init()`.
  - The CAN ID is read from GPIO pins `PB3..PB5` at startup (see `comms.c`). These pins are configured as inputs in `MX_GPIO_Init()`.
- - The CAN ID is read from GPIO pins `PB3..PB5` at startup (see `comms.c`). These pins are configured as inputs in `MX_GPIO_Init()`.
- - CAN transmission: diagnostics are sent over Classic CAN frames (max 8 bytes). The 11-byte diagnostic payload is split into multiple frames if necessary.
+ - CAN transmission: diagnostics are sent using a purpose-built pair of Classic CAN frames (`can_id` and `can_id+1`). Frame A contains ΔP1, ΔP2, RPM, and status; Frame B contains ΔP3 and CRC.
 - `void sensors_poll(void);`
 	- Description: Read BMP280 raw registers on each configured channel and update stored measurements and ΔP values.
 	- Notes: uses a simple scaling of raw pressure. Replace with full compensation using BMP280 calibration for production.
@@ -86,7 +85,7 @@ All function prototypes below are the canonical declarations; include the corres
 
 `comms.h`
 - `void comms_init(void);`
-	- Description: Initialize UART and CAN peripherals. Reads CAN ID from GPIO PC0..PC2 and configures TX queue.
+	- Description: Initialize UART and CAN peripherals. Reads CAN ID from GPIO pins `PB3..PB5` and configures TX queue.
 - `void comms_poll(void);`
 	- Description: Handle UART frame parsing (COBS + CRC) and periodically transmit diagnostic frames over UART and CAN.
 	- Diagnostic payload (11 bytes before COBS):

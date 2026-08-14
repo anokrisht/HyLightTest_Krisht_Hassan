@@ -37,21 +37,7 @@ static bool tca_select_channel(uint8_t ch)
     return true;
 }
 
-static bool bmp280_read_raw(uint8_t channel, int32_t *out_raw)
-{
-    if (!tca_select_channel(channel)) return false;
-    uint8_t id = 0;
-    if (HAL_I2C_Mem_Read(&hi2c2, 0x76<<1, 0xD0, I2C_MEMADD_SIZE_8BIT, &id, 1, 100) != HAL_OK)
-        return false;
-    if (id != 0x58 && id != 0x60) return false; /* BMP280/other */
 
-    uint8_t buf[3];
-    if (HAL_I2C_Mem_Read(&hi2c2, 0x76<<1, 0xF7, I2C_MEMADD_SIZE_8BIT, buf, 3, 200) != HAL_OK)
-        return false;
-    int32_t raw = ((int32_t)buf[0] << 12) | ((int32_t)buf[1] << 4) | ((int32_t)(buf[2] >> 4));
-    *out_raw = raw;
-    return true;
-}
 
 static bool bmp280_read_temp_and_press_raw(uint8_t channel, int32_t *raw_temp, int32_t *raw_press)
 {

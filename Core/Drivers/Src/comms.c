@@ -1,4 +1,4 @@
-/* comms.c - minimal CAN TX and UART COBS+CRC16 streaming */
+/* comms.c - minimal CAN TX and UART COBS+CRC16 streaming (driver) */
 #include "comms.h"
 #include "main.h"
 #include "utils.h"

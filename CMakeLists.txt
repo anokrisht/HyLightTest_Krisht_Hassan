@@ -49,11 +49,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add new application sources
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/utils.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/sensors.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/fan.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/comms.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/app.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Lib/Src/utils.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Drivers/Src/sensors.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Drivers/Src/fan.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Drivers/Src/comms.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/App/Src/app.c
 )
 
 # Add include paths
@@ -62,6 +62,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 )
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/Core/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Drivers/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/App/Inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/Core/Lib/Inc
 )
 
 # Add project symbols (macros)

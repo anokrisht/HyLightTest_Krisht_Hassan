@@ -1,4 +1,4 @@
-/* sensors.h - BMP280 via TCA9548A multiplexer */
+/* sensors.h - BMP280 via TCA9548A multiplexer (driver) */
 #ifndef SENSORS_H
 #define SENSORS_H
 

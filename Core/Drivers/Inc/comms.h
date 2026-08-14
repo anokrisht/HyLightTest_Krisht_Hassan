@@ -1,4 +1,4 @@
-/* comms.h - CAN TX and UART (COBS + CRC16) */
+/* comms.h - CAN TX and UART (COBS + CRC16) driver interface */
 #ifndef COMMS_H
 #define COMMS_H
 

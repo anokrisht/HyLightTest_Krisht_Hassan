@@ -1,4 +1,4 @@
-/* utils.h - CRC16 and COBS utilities */
+/* utils.h - CRC16 and COBS utilities (library) */
 #ifndef UTILS_H
 #define UTILS_H
 

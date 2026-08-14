@@ -1,4 +1,4 @@
-/* utils.c - CRC16 and COBS utilities */
+/* utils.c - CRC16 and COBS utilities (library) */
 #include "utils.h"
 
 uint16_t crc16_ccitt(const uint8_t *data, size_t len)

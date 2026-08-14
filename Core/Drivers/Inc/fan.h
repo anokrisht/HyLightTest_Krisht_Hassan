@@ -1,4 +1,4 @@
-/* fan.h - MAX6650 fan controller interface */
+/* fan.h - MAX6650 fan controller interface (driver) */
 #ifndef FAN_H
 #define FAN_H
 

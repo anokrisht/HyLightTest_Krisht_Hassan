@@ -1,4 +1,4 @@
-/* sensors.c - simple BMP280 reader via TCA9548A */
+/* sensors.c - simple BMP280 reader via TCA9548A (driver) */
 #include "sensors.h"
 #include "main.h"
 #include "utils.h"

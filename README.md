@@ -60,7 +60,4 @@ cmake --build build -- -j4
 	- `0x02` → Force fan OFF
 	- `0x03` → Return to automatic mode
 
-## Next recommendations
-- Replace placeholder registers/addresses in `Core/Drivers` with exact values from sensor and fan datasheets.
-- Add unit tests (Unity) for drivers and services and run them in CI.
-- Consider introducing a lightweight scheduler or RTOS for deterministic behavior.
+

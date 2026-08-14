@@ -29,7 +29,8 @@ Embedded firmware for the HyLighter Pressure Control System (STM32G431).
 ## Assumptions and simplifications
 - Sensors: BMP280 devices are available at I2C address `0x76` on each TCA9548A channel; ID check accepts `0x58` or `0x60`.
 - Fan controller: MAX6650 registers and address are approximated (placeholder `0x2F`); replace with exact datasheet registers for production.
-- Pressure compensation: current implementation reads raw ADC values and applies a crude scaling; for production, use BMP280 calibration and compensation formulas.
+- Pressure compensation: BMP280 calibration and full compensation formulas are implemented in `sensors.c`; this produces calibrated pressures in Pascals.
+	Drivers use `I2C2` to avoid SWD pin conflicts — ensure `MX_I2C2_Init()` runs before `app_init()`.
 - Timing: software uses a simple polling loop (~500 ms). A real system may require an RTOS or timer-driven architecture for tighter timing and concurrency.
 
 ## Steps to reproduce and test firmware

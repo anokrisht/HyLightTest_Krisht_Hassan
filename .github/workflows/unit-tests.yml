@@ -17,5 +17,10 @@ jobs:
       - name: Build utils host test
         run: |
           gcc -ICore/Lib/Inc -Itests Core/Lib/Src/utils.c tests/test_utils.c tests/unity/unity.c -o tests/utils_test
-      - name: Run tests
+      - name: Run utils tests
         run: ./tests/utils_test
+      - name: Build BMP280 compensation test
+        run: |
+          gcc -std=c11 -Itests tests/test_bmp280.c -o tests/test_bmp280
+      - name: Run BMP280 test
+        run: ./tests/test_bmp280

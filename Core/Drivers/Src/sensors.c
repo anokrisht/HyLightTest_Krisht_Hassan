@@ -28,6 +28,7 @@ typedef struct {
 } bmp280_calib_t;
 
 static bmp280_calib_t bmp_cal[SENSORS_COUNT];
+static bool bmp_cal_valid[SENSORS_COUNT] = {0};
 
 static bool tca_select_channel(uint8_t ch)
 {
@@ -113,11 +114,19 @@ static uint32_t bmp280_compensate_P(const bmp280_calib_t *cal, int32_t adc_P, in
 void sensors_init(void)
 {
     memset(&s, 0, sizeof(s));
-    /* I2C1 should be initialized by CubeMX-generated MX_I2C1_Init() in main.c */
+    /* I2C2 should be initialized by CubeMX-generated MX_I2C2_Init() in main.c */
     for (int i = 0; i < SENSORS_COUNT; ++i) {
         s.present[i] = false;
-        /* attempt to read calibration for each sensor; ignore failures here */
-        bmp280_read_calibration(i);
+        bmp_cal_valid[i] = false;
+        /* select channel and explicitly configure BMP280 ctrl_meas (oversampling + normal mode)
+           so the sensor runs continuous measurements. Then read calibration. */
+        if (!tca_select_channel(i)) continue;
+        /* ctrl_meas: osrs_t=1, osrs_p=1, mode=3 (normal) -> 0x27 */
+        uint8_t ctrl_meas = 0x27;
+        HAL_I2C_Mem_Write(&hi2c2, 0x76<<1, 0xF4, I2C_MEMADD_SIZE_8BIT, &ctrl_meas, 1, 200);
+        /* config left as default (no filter, minimal standby) */
+        /* attempt to read calibration for each sensor */
+        if (bmp280_read_calibration(i)) bmp_cal_valid[i] = true;
     }
 }
 
@@ -126,14 +135,16 @@ void sensors_poll(void)
     for (uint8_t ch = 0; ch < SENSORS_COUNT; ++ch) {
         int32_t raw_t = 0, raw_p = 0;
         bool ok = bmp280_read_temp_and_press_raw(ch, &raw_t, &raw_p);
-        s.present[ch] = ok;
-        if (ok) {
+        /* only mark present and compute compensated pressure when calibration is valid */
+        if (ok && bmp_cal_valid[ch]) {
+            s.present[ch] = true;
             s.raw_pressure[ch] = raw_p;
             int32_t local_tfine = 0;
             bmp280_compensate_T(&bmp_cal[ch], raw_t, &local_tfine);
             uint32_t press_pa = bmp280_compensate_P(&bmp_cal[ch], raw_p, local_tfine);
             s.pressure_pa[ch] = (float)press_pa;
         } else {
+            s.present[ch] = false;
             s.pressure_pa[ch] = 0.0f;
         }
     }

@@ -37,18 +37,41 @@ void comms_init(void)
     HAL_UART_Receive_IT(&huart2, uart_rx_buf, 1);
 }
 
-/* Simple diagnostic CAN transmit: single frame with up to 8 bytes (truncated) */
+/* Diagnostic CAN transmit.
+   Using Classic CAN (FDCAN_FRAME_CLASSIC) limits data payload to 8 bytes per frame.
+   Split longer diagnostics into multiple 0..N frames of up to 8 bytes each. */
 void comms_send_diagnostics(const void *payload, uint16_t len)
 {
-    FDCAN_TxHeaderTypeDef txHeader = {0};
-    txHeader.Identifier = can_id;
-    txHeader.IdType = FDCAN_STANDARD_ID;
-    txHeader.TxFrameType = FDCAN_DATA_FRAME;
-    /* payload expected up to 12 bytes (we send 11) */
-    txHeader.DataLength = FDCAN_DLC_BYTES_12;
-    uint8_t data[12] = {0};
-    memcpy(data, payload, (len>12)?12:len);
-    HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txHeader, data);
+    const uint8_t *p = (const uint8_t*)payload;
+    uint16_t remaining = len;
+    uint16_t offset = 0;
+    while (remaining > 0) {
+        uint8_t chunk = (remaining > 8) ? 8 : (uint8_t)remaining;
+        FDCAN_TxHeaderTypeDef txHeader = {0};
+        txHeader.Identifier = can_id;
+        txHeader.IdType = FDCAN_STANDARD_ID;
+        txHeader.TxFrameType = FDCAN_DATA_FRAME;
+        /* select DLC constant for chunk length */
+        switch (chunk) {
+            case 0: txHeader.DataLength = FDCAN_DLC_BYTES_0; break;
+            case 1: txHeader.DataLength = FDCAN_DLC_BYTES_1; break;
+            case 2: txHeader.DataLength = FDCAN_DLC_BYTES_2; break;
+            case 3: txHeader.DataLength = FDCAN_DLC_BYTES_3; break;
+            case 4: txHeader.DataLength = FDCAN_DLC_BYTES_4; break;
+            case 5: txHeader.DataLength = FDCAN_DLC_BYTES_5; break;
+            case 6: txHeader.DataLength = FDCAN_DLC_BYTES_6; break;
+            case 7: txHeader.DataLength = FDCAN_DLC_BYTES_7; break;
+            case 8: default: txHeader.DataLength = FDCAN_DLC_BYTES_8; break;
+        }
+        uint8_t data[8] = {0};
+        memcpy(data, &p[offset], chunk);
+        /* try to enqueue; if it fails, mark something (here we ignore but could set status) */
+        if (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txHeader, data) != HAL_OK) {
+            /* TODO: handle queue full/error (set status flag, retry, or log) */
+        }
+        offset += chunk;
+        remaining -= chunk;
+    }
 }
 
 /* UART receive IRQ handler: collect bytes, decode COBS frames with CRC16 */

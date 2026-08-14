@@ -16,6 +16,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential gcc
       - name: Build utils host test
         run: |
-          gcc -ICore/Lib/Inc Core/Lib/Src/utils.c tests/test_utils.c -o tests/utils_test
+          gcc -ICore/Lib/Inc -Itests Core/Lib/Src/utils.c tests/test_utils.c tests/unity/unity.c -o tests/utils_test
       - name: Run tests
         run: ./tests/utils_test

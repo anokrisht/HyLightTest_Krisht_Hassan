@@ -33,13 +33,8 @@ void comms_init(void)
     /* Assumes MX_USART2_UART_Init() and MX_FDCAN1_Init() were called from main.c
        Start FDCAN peripheral if not already started and enable UART RX IRQ. */
     read_can_id_from_gpio();
-    /* start UART receive in interrupt mode (ensure NVIC enabled in CubeMX; enable here if not) */
+    /* start UART receive in interrupt mode — NVIC and peripheral start should be configured by CubeMX-generated init code */
     HAL_UART_Receive_IT(&huart2, uart_rx_buf, 1);
-    /* Ensure FDCAN is started so TX works */
-    HAL_FDCAN_Start(&hfdcan1);
-    /* Make sure UART IRQ is enabled (CubeMX should handle this normally) */
-    HAL_NVIC_SetPriority(USART2_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(USART2_IRQn);
 }
 
 /* Simple diagnostic CAN transmit: single frame with up to 8 bytes (truncated) */
